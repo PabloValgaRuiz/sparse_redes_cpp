@@ -1,7 +1,7 @@
 #include <regex>
-#include "eigen/Eigen/SparseCore"
+#include "eigen/Eigen/Sparse"
 #include "MobMatrix.hpp"
-
+#include "eigen/Eigen/SparseLU"
 
 typedef Eigen::SparseMatrix<double, Eigen::RowMajor> SpMat;
 typedef Eigen::Triplet<double> Triplet;
