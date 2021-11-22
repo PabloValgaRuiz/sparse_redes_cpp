@@ -26,10 +26,13 @@ int main(){
 
     for(int i = 0; i < T.N; i++){
         for(int j = 0; j < T.vecinos[i]; j++){
-            Matrix.insert(i, T.Mvecinos[i][j]) = T.Mpesos[i][j];
+            double value = (T.Mpesos[i][j] + T.MpesosT[i][j])/2; //media para que quede simetrica
+            tripletes.emplace_back(i, T.Mvecinos[i][j], value);
         }
     }
+    Matrix.setFromTriplets(tripletes.begin(), tripletes.end());
     Matrix.makeCompressed();
+
 
 
     return 0;
