@@ -23,22 +23,30 @@ private:
 public:
     int N = 0, Nc = 0, Pob = 0, Ratio = 1;
     long long Links=0;
-    std::vector<int> cityPatch;
-    std::vector<int> population;
-    std::vector<double> area;
-    std::vector<int> vecinos;
-    std::vector<int> vecinosT;
-    std::vector<std::vector<int>> Mvecinos;
-    std::vector<std::vector<int>> MvecinosT;
-    std::vector<std::vector<double>> Mpesos;
-    std::vector<std::vector<double>> MpesosT;
-    std::vector<double> mC; //Matriz que cuenta la cantidad de gente de cada nodo que sale de su CIUDAD
-    std::vector<double> mI; //Matriz que cuenta la cantidad de gente de cada nodo que no sale de su ciudad, pero sí de su NODO
-    std::vector<std::vector<double>> Rin, RinT;
-    std::vector<std::vector<double>> Rout, RoutT;
+    std::vector<int> cityPatch{};
+    std::vector<int> population{};
+    std::vector<double> area{};
+    std::vector<int> vecinos{};
+    std::vector<int> vecinosT{};
+    std::vector<std::vector<int>> Mvecinos{};
+    std::vector<std::vector<int>> MvecinosT{};
+    std::vector<std::vector<double>> Mpesos{};
+    std::vector<std::vector<double>> MpesosT{};
+    std::vector<double> mC{}; //Matriz que cuenta la cantidad de gente de cada nodo que sale de su CIUDAD
+    std::vector<double> mI{}; //Matriz que cuenta la cantidad de gente de cada nodo que no sale de su ciudad, pero sí de su NODO
+    std::vector<std::vector<double>> Rin{}, RinT{};
+    std::vector<std::vector<double>> Rout{}, RoutT{};
 
     MobMatrix(const std::string& _city_patch, const std::string& _mobility_network, const std::string& _pop_area);
+    MobMatrix();
 };
+
+MobMatrix::MobMatrix(){
+    this->city_patch = "";
+    this->mobility_network = "";
+    this->pop_area = "";
+
+}
 
 MobMatrix::MobMatrix(const std::string& _city_patch, const std::string& _mobility_network, const std::string& _pop_area){
     this->city_patch = _city_patch;
