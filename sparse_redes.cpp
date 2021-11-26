@@ -26,8 +26,8 @@ _Matrix_Type_ pseudoInverse(const _Matrix_Type_ &a, double epsilon = 0.000001)
 double contarPesos(const SpMat& Matrix);
 SpMat::InnerIterator chooseLink(const SpMat& Matrix, double p);
 
+#define ESCRIBIR_MATRIZ
 #define LEER_MATRIZ
-//#define ESCRIBIR_MATRIZ
 
 int main(){
 
@@ -60,12 +60,12 @@ int main(){
     Matrix.makeCompressed();
 
     for(int i = 0; i < Matrix.outerSize(); i++){
-        int vecinos = 0;
+        double weighted_degree = 0;
         for(SpMat::InnerIterator it(Matrix, i); it; ++it){
-            tripletes2.emplace_back(it.row(), it.col(), -1);
-            vecinos++;
+            tripletes2.emplace_back(it.row(), it.col(), -it.value());
+            weighted_degree += it.value();
         }
-        tripletes2.emplace_back(i, i, vecinos);
+        tripletes2.emplace_back(i, i, weighted_degree);
     }
 
     Laplaciano.setFromTriplets(tripletes2.begin(), tripletes2.end());
@@ -83,7 +83,9 @@ int main(){
             itRes.valueRef() = (identidad.col(it.row()) - identidad.col(it.col())).transpose() * x * (identidad.col(it.row()) - identidad.col(it.col()));
             ++itRes;
         }
-        Resistances.coeffRef(i,i) = 1;
+        //La resistencia de un enlace se definia como R = 1/peso, aunque los autoloops no se han podido introducir en el laplaciano
+        //por lo que se añade al final como 1/peso siendo el peso la poblacion en el autoloop (el peso de los enlaces era la poblacion de los mismos)
+        Resistances.coeffRef(i,i) = 1.0 / T.population[i];
     }
 
     //Reescribir la matriz Matrix, esta vez identica a MobMatrix
@@ -140,16 +142,18 @@ int main(){
 #endif
     //Generador numeros aleatorios
     static std::default_random_engine generator;
-    static std::uniform_real_distribution<double> distribution(0.0, contarPesos(Resistances)); //Hasta que llegue a todos los pesos de la red
+    double normaRed = contarPesos(Resistances);
+    static std::uniform_real_distribution<double> distribution(0.0, normaRed); //Hasta que llegue a todos los pesos de la red
     generator.seed(static_cast<unsigned int>(time(NULL)));
 
+    //Creacion de la nueva red
     tripletes1.clear();
-    const int LINKS = T.Links;
+    const int LINKS = T.Links/10;
     double p;
     for(int s = 0; s < LINKS; s++){
         p = distribution(generator);
         auto it = chooseLink(Resistances, p);
-        tripletes1.emplace_back(it.row(), it.col(), Matrix.coeff(it.row(),it.col())); //Meter el peso
+        tripletes1.emplace_back(it.row(), it.col(), Matrix.coeff(it.row(),it.col()) /(LINKS * Resistances.coeff(it.row(),it.col()) / normaRed )); //Meter el peso/(LINKS * prob)
     }
     Matrix.setZero(); Matrix.data().squeeze(); //Rehacer la matriz de cero
     Matrix.setFromTriplets(tripletes1.begin(), tripletes1.end());
@@ -161,15 +165,16 @@ int main(){
         for(SpMat::InnerIterator it(Matrix, i); it; ++it){
             norma += it.value();
         }
-        for(SpMat::InnerIterator it(Matrix, i); it; ++it){
-            it.valueRef() *= T.population[it.row()] / norma; //Todos los pesos ahora suman la poblacion
-        }
+        if(norma != 0) for(SpMat::InnerIterator it(Matrix, i); it; ++it){
+                it.valueRef() *= T.population[it.row()] / norma; //Todos los pesos ahora suman la poblacion
+            }
     }
 
     std::ofstream file2{"citiesMult/"+state+"/newmobnetwork.txt"};
     for(int i = 0; i < Matrix.outerSize(); i++){
         for(SpMat::InnerIterator it(Matrix, i); it; ++it){
-            file2 << it.row() << " " << it.col() << " " << static_cast<int>(it.value()) << std::endl;
+            if(static_cast<int>(it.value()) != 0)
+                file2 << it.row() << " " << it.col() << " " << static_cast<int>(it.value()) << std::endl;
         }
     }
     file2.close();
@@ -187,10 +192,10 @@ double contarPesos(const SpMat& Matrix){
     return peso;
 }
 
-SpMat::InnerIterator chooseLink(const SpMat& Matrix, double p){
+SpMat::InnerIterator chooseLink(const SpMat& Resistances, double p){
     double temp = 0;
-    for(int i = 0; i < Matrix.outerSize(); i++){
-        for(SpMat::InnerIterator it(Matrix, i); it; ++it){
+    for(int i = 0; i < Resistances.outerSize(); i++){
+        for(SpMat::InnerIterator it(Resistances, i); it; ++it){
             temp += it.value();
             if(temp > p) return it;
         }
